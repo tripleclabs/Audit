@@ -1,6 +1,5 @@
-<script lang="ts">
+<script module lang="ts">
 	import { cva, type VariantProps } from 'class-variance-authority';
-	import { cn } from '$lib/utils';
 
 	export const buttonVariants = cva(
 		'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
@@ -27,12 +26,26 @@
 	type Variant = VariantProps<typeof buttonVariants>['variant'];
 	type Size = VariantProps<typeof buttonVariants>['size'];
 
-	export let variant: Variant = 'default';
-	export let size: Size = 'default';
-	export let className = '';
-	export { className as class };
+	export type ButtonProps = {
+		variant?: Variant;
+		size?: Size;
+		class?: string;
+	};
 </script>
 
-<button class={cn(buttonVariants({ variant, size }), className)} {...$$restProps}>
-	<slot />
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+	import { cn } from '$lib/utils';
+
+	let {
+		variant = 'default',
+		size = 'default',
+		class: className = '',
+		children,
+		...restProps
+	}: ButtonProps & { children?: Snippet; [key: string]: unknown } = $props();
+</script>
+
+<button class={cn(buttonVariants({ variant, size }), className)} {...restProps}>
+	{@render children?.()}
 </button>

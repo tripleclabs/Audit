@@ -2,9 +2,9 @@
 	import ReadonlyCode from '$lib/components/ReadonlyCode.svelte';
 	import type { PageData } from './$types';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
-	const files = data.tree.filter((node) => node.type === 'blob');
+	const files = $derived(data.tree.filter((node) => node.type === 'blob'));
 </script>
 
 <div class="grid w-full grid-cols-[300px_1fr] gap-4">

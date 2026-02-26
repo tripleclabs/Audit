@@ -3,7 +3,7 @@
 	import { Button } from '$components/ui/button';
 	import type { PageData } from './$types';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 </script>
 
 <section class="w-full rounded-lg border border-border p-8 shadow-sm">
