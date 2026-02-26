@@ -1,4 +1,3 @@
-import { signIn, signOut } from '../auth';
 import type { Actions, PageServerLoad } from './$types';
 import { getRepoConfigs } from '$lib/server/config';
 
@@ -13,9 +12,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	signin: async (event) => {
-		await signIn(event, 'github', { redirectTo: '/' });
+		await event.locals.signIn('github', { redirectTo: '/' });
 	},
 	signout: async (event) => {
-		await signOut(event, { redirectTo: '/' });
+		await event.locals.signOut({ redirectTo: '/' });
 	}
 };

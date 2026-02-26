@@ -10,11 +10,10 @@
 	import { oneDark } from '@codemirror/theme-one-dark';
 	import { onMount } from 'svelte';
 
-	export let content = '';
-	export let filePath = '';
+	let { content = '', filePath = '' }: { content?: string; filePath?: string } = $props();
 
 	let container: HTMLDivElement;
-	let editorView: EditorView | null = null;
+	let editorView: EditorView | null = $state(null);
 	const languageCompartment = new Compartment();
 
 	const detectLanguage = (path: string) => {
@@ -45,12 +44,14 @@
 		return () => editorView?.destroy();
 	});
 
-	$: if (editorView) {
-		editorView.dispatch({
-			changes: { from: 0, to: editorView.state.doc.length, insert: content },
-			effects: languageCompartment.reconfigure(detectLanguage(filePath))
-		});
-	}
+	$effect(() => {
+		if (editorView) {
+			editorView.dispatch({
+				changes: { from: 0, to: editorView.state.doc.length, insert: content },
+				effects: languageCompartment.reconfigure(detectLanguage(filePath))
+			});
+		}
+	});
 </script>
 
-<div bind:this={container} class="h-full min-h-[600px] overflow-hidden rounded border border-slate-700" />
+<div bind:this={container} class="h-full min-h-[600px] overflow-hidden rounded border border-slate-700"></div>
