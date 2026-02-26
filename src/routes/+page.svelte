@@ -7,12 +7,29 @@
 </script>
 
 <section class="w-full rounded-lg border border-border p-8 shadow-sm">
-	<h1 class="text-2xl font-semibold">Audit</h1>
-	<p class="mt-2 text-sm text-slate-600">SvelteKit + shadcn-svelte + GitHub authentication starter.</p>
+	<h1 class="text-2xl font-semibold">Audit Portal</h1>
+	<p class="mt-2 text-sm text-slate-600">Read-only source access for approved auditors.</p>
 
 	{#if data.session?.user}
-		<div class="mt-6 space-y-2">
-			<p class="text-sm">Signed in as <span class="font-medium">{data.session.user.email ?? data.session.user.name}</span>.</p>
+		<div class="mt-6 space-y-4">
+			<p class="text-sm">
+				Signed in as
+				<span class="font-medium">{data.session.user.email ?? data.session.user.name}</span>.
+			</p>
+
+			<div class="space-y-2">
+				<h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Configured repositories</h2>
+				<ul class="space-y-2">
+					{#each data.repos as repo}
+						<li>
+							<a class="text-sm text-blue-700 hover:underline" href={`/repos/${repo.tag}`}>
+								{repo.tag} → {repo.owner}/{repo.name}@{repo.branch}
+							</a>
+						</li>
+					{/each}
+				</ul>
+			</div>
+
 			<form method="POST" action="?/signout">
 				<Button variant="secondary" type="submit">Sign out</Button>
 			</form>

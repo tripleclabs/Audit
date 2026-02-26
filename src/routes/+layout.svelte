@@ -5,6 +5,6 @@
 	export let data: LayoutData;
 </script>
 
-<main class="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4">
+<main class="mx-auto flex min-h-screen w-full max-w-7xl px-4 py-8">
 	<slot />
 </main>
