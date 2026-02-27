@@ -87,4 +87,4 @@
 	});
 </script>
 
-<div bind:this={container} class="h-full min-h-[600px] overflow-hidden rounded border {dark ? 'border-slate-700' : 'border-border'}"></div>
+<div bind:this={container} class="h-full min-w-0 overflow-auto rounded border {dark ? 'border-slate-700' : 'border-border'}"></div>

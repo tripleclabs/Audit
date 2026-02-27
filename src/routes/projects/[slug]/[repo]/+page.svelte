@@ -240,8 +240,8 @@
 			</div>
 		</header>
 
-		<div class="flex flex-1 flex-col overflow-hidden">
-			<section class="relative flex-1 overflow-hidden bg-secondary p-2">
+		<div class="flex h-[calc(100vh-2.5rem)] min-w-0 flex-col">
+			<section class="relative flex-1 overflow-auto bg-secondary p-2">
 				{#if data.selectedPath}
 					<ReadonlyCode filePath={data.selectedPath} content={data.selectedContent} dark={darkTheme} line={data.selectedLine} />
 				{:else}
@@ -262,7 +262,7 @@
 			</section>
 
 			{#if data.selectedPath}
-				<section class="shrink-0 border-t border-border bg-background p-3">
+				<section class="h-44 shrink-0 border-t border-border bg-background p-3">
 					<form
 						bind:this={formEl}
 						method="post"
@@ -286,7 +286,7 @@
 							rows={3}
 							placeholder="Add your notes for this file..."
 							value={data.noteContent}
-							class="mb-2 resize-y"
+							class="mb-2 resize-none h-16"
 						/>
 						<div class="flex items-center gap-2">
 							<Button type="submit" size="sm" disabled={saving}>
