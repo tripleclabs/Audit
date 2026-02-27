@@ -25,9 +25,11 @@ function parseRepoString(s: string): RepoConfig {
 }
 
 let projectsCache: ProjectConfig[] | null = null;
+let projectsCacheTime = 0;
+const CACHE_TTL_MS = 60_000;
 
 export async function getProjects(): Promise<ProjectConfig[]> {
-	if (!projectsCache) {
+	if (!projectsCache || Date.now() - projectsCacheTime > CACHE_TTL_MS) {
 		const raw = await readFile('config/projects.yaml', 'utf-8');
 		const data = parse(raw) as { projects: Array<{ name: string; slug: string; repos: string[]; users: string[] }> };
 		projectsCache = data.projects.map((p) => ({
@@ -36,6 +38,7 @@ export async function getProjects(): Promise<ProjectConfig[]> {
 			repos: (p.repos ?? []).map(parseRepoString),
 			users: (p.users ?? []).map((u) => u.toLowerCase())
 		}));
+		projectsCacheTime = Date.now();
 	}
 	return projectsCache;
 }

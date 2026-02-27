@@ -18,6 +18,5 @@ ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY --from=build /app/package.json ./
-COPY config ./config
 EXPOSE 3000
-CMD ["bun", "build"]
+CMD ["bun", "./build/index.js"]

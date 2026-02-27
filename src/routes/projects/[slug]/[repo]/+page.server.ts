@@ -6,7 +6,8 @@ import { db } from '$lib/server/db';
 import { audit, note } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-export const load: PageServerLoad = async ({ params, locals, url, request }) => {
+export const load: PageServerLoad = async (event) => {
+	const { params, locals, url } = event;
 	if (!locals.session) throw redirect(303, '/');
 	const user = locals.user ?? null;
 
@@ -28,11 +29,7 @@ export const load: PageServerLoad = async ({ params, locals, url, request }) => 
 	if (selectedPath) {
 		selectedContent = await getFileContent(project.slug, repo, selectedPath);
 
-		const rawIp =
-			request.headers.get('x-forwarded-for') ||
-			request.headers.get('x-real-ip') ||
-			'unknown';
-		const ip = rawIp.split(',')[0].trim() || 'unknown';
+		const ip = event.getClientAddress();
 		const userIdentifier = user?.email || user?.name || user?.id || 'unknown';
 
 		db.insert(audit)
@@ -75,13 +72,17 @@ export const actions: Actions = {
 	saveNote: async ({ request, locals, params }) => {
 		if (!locals.user) throw redirect(303, '/');
 
+		const project = await getProjectBySlug(params.slug);
+		if (!project.users.includes(locals.user.email.toLowerCase())) {
+			throw error(403, 'You do not have access to this project');
+		}
+
 		const formData = await request.formData();
 		const filePath = formData.get('filePath')?.toString();
 		const content = formData.get('content')?.toString() ?? '';
 
 		if (!filePath) return fail(400, { message: 'Missing file path' });
 
-		const project = await getProjectBySlug(params.slug);
 		const repo = getRepoInProject(project, params.repo);
 		const rk = repoKey(project.slug, repo);
 

@@ -18,6 +18,9 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 	if (q.length > 200) {
 		throw error(400, 'Search query too long');
 	}
+	if (q.startsWith('-')) {
+		throw error(400, 'Invalid search query');
+	}
 
 	const results = await searchProject(project.slug, project.repos, q);
 

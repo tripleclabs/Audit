@@ -1,11 +1,12 @@
 import { error, json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getProjectBySlug, getRepoInProject, repoKey } from '$lib/server/config';
-import { getFileContent } from '$lib/server/repo-store';
+import { getFileContent, getTree } from '$lib/server/repo-store';
 import { db } from '$lib/server/db';
 import { audit } from '$lib/server/db/schema';
 
-export const GET: RequestHandler = async ({ locals, params, url, request }) => {
+export const GET: RequestHandler = async (event) => {
+	const { locals, params, url } = event;
 	if (!locals.session) throw redirect(303, '/');
 	const user = locals.user ?? null;
 
@@ -18,11 +19,15 @@ export const GET: RequestHandler = async ({ locals, params, url, request }) => {
 	if (!path) throw error(400, 'Missing required query param: path');
 
 	const repo = getRepoInProject(project, params.repo);
+
+	const tree = await getTree(project.slug, repo);
+	if (!tree.some((node) => node.type === 'blob' && node.path === path)) {
+		throw error(404, 'File not found');
+	}
+
 	const content = await getFileContent(project.slug, repo, path);
 
-	const rawIp =
-		request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-	const ip = rawIp.split(',')[0].trim() || 'unknown';
+	const ip = event.getClientAddress();
 	const userIdentifier = user?.email || user?.name || user?.id || 'unknown';
 
 	db.insert(audit)

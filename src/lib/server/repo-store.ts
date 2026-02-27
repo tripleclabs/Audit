@@ -15,7 +15,7 @@ export type TreeNode = {
 	type: 'blob' | 'tree';
 };
 
-const DATA_DIR = resolve('data/repos');
+const DATA_DIR = resolve(env.DATA_DIR || 'data/repos');
 const treeCache = new Map<string, TreeNode[]>();
 const cloneLocks = new Map<string, Promise<void>>();
 
@@ -37,7 +37,7 @@ async function walkDir(dir: string, base: string): Promise<TreeNode[]> {
 	const items = await readdir(dir, { withFileTypes: true });
 
 	for (const item of items) {
-		if (item.name === '.git' || item.name === '.tree.json' || item.name === '.claude' || item.name === '.vscode') continue;
+		if (item.name === '.git' || item.name === '.tree.json' || item.name === '.repo-meta.json' || item.name === '.claude' || item.name === '.vscode') continue;
 		const fullPath = join(dir, item.name);
 		const relPath = relative(base, fullPath);
 
@@ -66,12 +66,26 @@ export async function ensureCloned(projectSlug: string, repo: RepoConfig): Promi
 	}
 
 	const doWork = async () => {
+		const metaFile = join(dir, '.repo-meta.json');
 		const treeFile = join(dir, '.tree.json');
+		let needsClone = true;
 
-		if (await exists(treeFile)) {
-			const raw = await readFile(treeFile, 'utf-8');
-			treeCache.set(key, JSON.parse(raw));
-			return;
+		if (await exists(metaFile)) {
+			const meta = JSON.parse(await readFile(metaFile, 'utf-8'));
+			if (meta.tag === repo.tag && await exists(treeFile)) {
+				const raw = await readFile(treeFile, 'utf-8');
+				treeCache.set(key, JSON.parse(raw));
+				return;
+			}
+			// Tag mismatch or missing tree — wipe and re-clone
+		} else if (await exists(treeFile)) {
+			// Legacy: no meta file but tree exists — migrate by re-cloning
+		}
+
+		// Remove stale/partial directory before cloning
+		if (await exists(dir)) {
+			const { rm } = await import('fs/promises');
+			await rm(dir, { recursive: true, force: true });
 		}
 
 		const token = env.GITHUB_API_TOKEN;
@@ -91,6 +105,7 @@ export async function ensureCloned(projectSlug: string, repo: RepoConfig): Promi
 		const tree = await walkDir(dir, dir);
 		treeCache.set(key, tree);
 		await writeFile(treeFile, JSON.stringify(tree));
+		await writeFile(metaFile, JSON.stringify({ tag: repo.tag }));
 	};
 
 	const promise = doWork();

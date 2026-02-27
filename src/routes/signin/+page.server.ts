@@ -13,7 +13,8 @@ export const actions: Actions = {
   signInSocial: async (event) => {
     const formData = await event.request.formData();
     const provider = formData.get('provider')?.toString() ?? 'github';
-    const callbackURL = formData.get('callbackURL')?.toString() ?? '/';
+    const rawCallback = formData.get('callbackURL')?.toString() ?? '/';
+    const callbackURL = rawCallback.startsWith('/') && !rawCallback.startsWith('//') ? rawCallback : '/';
 
     const result = await auth.api.signInSocial({
       body: {
