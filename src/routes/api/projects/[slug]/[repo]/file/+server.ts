@@ -1,9 +1,30 @@
 import { error, json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import * as Sentry from '@sentry/sveltekit';
 import { getProjectBySlug, getRepoInProject, repoKey } from '$lib/server/config';
 import { getFileContent, getTree } from '$lib/server/repo-store';
 import { db } from '$lib/server/db';
 import { audit } from '$lib/server/db/schema';
+
+const accessLog = new Map<string, number[]>();
+const WINDOW_MS = 60_000;
+const THRESHOLD = 20;
+
+function checkAccessRate(userId: string): void {
+	const now = Date.now();
+	const timestamps = accessLog.get(userId) ?? [];
+	const recent = timestamps.filter((t) => now - t < WINDOW_MS);
+	recent.push(now);
+	accessLog.set(userId, recent);
+
+	if (recent.length === THRESHOLD + 1) {
+		Sentry.captureMessage(`High file access rate: ${userId} accessed ${recent.length} files in 1 minute`, {
+			level: 'warning',
+			tags: { type: 'bulk_access' },
+			extra: { userId, count: recent.length }
+		});
+	}
+}
 
 export const GET: RequestHandler = async (event) => {
 	const { locals, params, url } = event;
@@ -40,6 +61,8 @@ export const GET: RequestHandler = async (event) => {
 		.catch((e) => {
 			console.error('failed to log audit entry', e);
 		});
+
+	checkAccessRate(userIdentifier);
 
 	return json({ path, content });
 };
