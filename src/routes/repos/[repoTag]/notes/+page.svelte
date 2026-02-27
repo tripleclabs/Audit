@@ -19,7 +19,7 @@
 	}
 </script>
 
-<div class="mx-auto max-w-3xl space-y-6">
+<div class="mx-auto max-w-3xl space-y-6 px-4 py-8">
 	<div class="flex items-center justify-between">
 		<div>
 			<a href={`/repos/${data.repo.tag}`} class="text-sm text-blue-700 hover:underline">← Back to {data.repo.tag}</a>

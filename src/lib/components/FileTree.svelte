@@ -26,7 +26,6 @@
 			}
 		}
 
-		// Sort: folders first, then alphabetical
 		function sortEntries(entries: DirEntry[]) {
 			entries.sort((a, b) => {
 				if (a.isFile !== b.isFile) return a.isFile ? 1 : -1;
@@ -42,15 +41,22 @@
 </script>
 
 <script lang="ts">
+	import {
+		SidebarMenu,
+		SidebarMenuItem,
+		SidebarMenuButton,
+		SidebarMenuSub,
+		SidebarMenuSubItem,
+		SidebarMenuSubButton
+	} from '$lib/components/ui/sidebar';
+
 	let { tree, selectedPath, repoTag }: { tree: TreeNode[]; selectedPath: string; repoTag: string } =
 		$props();
 
 	const entries = $derived(buildTree(tree));
 
-	// Track which folders are expanded
 	let expanded = $state<Record<string, boolean>>({});
 
-	// Auto-expand folders containing the selected path
 	$effect(() => {
 		if (selectedPath) {
 			const parts = selectedPath.split('/');
@@ -65,46 +71,81 @@
 	}
 </script>
 
-{#snippet entryList(items: DirEntry[], depth: number)}
+{#snippet fileIcon()}
+	<svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+		<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+		<polyline points="14 2 14 8 20 8" />
+	</svg>
+{/snippet}
+
+{#snippet folderIcon(open: boolean)}
+	<svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+		{#if open}
+			<path d="M5 19a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4l2 3h9a2 2 0 0 1 2 2v1M5 19h14a2 2 0 0 0 2-2l1-9H4l1 9z" />
+		{:else}
+			<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+		{/if}
+	</svg>
+{/snippet}
+
+{#snippet chevron(open: boolean)}
+	<svg class="h-3 w-3 shrink-0 transition-transform {open ? 'rotate-90' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+		<polyline points="9 18 15 12 9 6" />
+	</svg>
+{/snippet}
+
+{#snippet renderEntries(items: DirEntry[], isRoot: boolean)}
 	{#each items as entry}
 		{#if entry.isFile}
-			<a
-				href={`/repos/${repoTag}?path=${encodeURIComponent(entry.fullPath)}`}
-				class={`flex items-center gap-1.5 truncate rounded px-2 py-0.5 text-sm hover:bg-slate-200 ${selectedPath === entry.fullPath ? 'bg-slate-200 font-medium' : ''}`}
-				style="padding-left: {depth * 16 + 8}px"
-				title={entry.fullPath}
-			>
-				<svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-					<polyline points="14 2 14 8 20 8" />
-				</svg>
-				{entry.name}
-			</a>
+			{#if isRoot}
+				<SidebarMenuItem>
+					<SidebarMenuButton isActive={selectedPath === entry.fullPath}>
+						{@render fileIcon()}
+						<a href={`/repos/${repoTag}?path=${encodeURIComponent(entry.fullPath)}`} title={entry.fullPath}>
+							<span>{entry.name}</span>
+						</a>
+					</SidebarMenuButton>
+				</SidebarMenuItem>
+			{:else}
+				<SidebarMenuSubItem>
+					<SidebarMenuSubButton size="sm" isActive={selectedPath === entry.fullPath}>
+						<a href={`/repos/${repoTag}?path=${encodeURIComponent(entry.fullPath)}`} title={entry.fullPath}>
+							<span>{entry.name}</span>
+						</a>
+					</SidebarMenuSubButton>
+				</SidebarMenuSubItem>
+			{/if}
 		{:else}
-			<button
-				onclick={() => toggle(entry.fullPath)}
-				class="flex w-full items-center gap-1.5 truncate rounded px-2 py-0.5 text-sm hover:bg-slate-200 cursor-pointer"
-				style="padding-left: {depth * 16 + 8}px"
-			>
-				<svg
-					class="h-4 w-4 shrink-0 text-slate-500 transition-transform {expanded[entry.fullPath] ? 'rotate-90' : ''}"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<polyline points="9 18 15 12 9 6" />
-				</svg>
-				<svg class="h-4 w-4 shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-				</svg>
-				{entry.name}
-			</button>
-			{#if expanded[entry.fullPath]}
-				{@render entryList(entry.children, depth + 1)}
+			{#if isRoot}
+				<SidebarMenuItem>
+					<SidebarMenuButton onclick={() => toggle(entry.fullPath)}>
+						{@render chevron(!!expanded[entry.fullPath])}
+						{@render folderIcon(!!expanded[entry.fullPath])}
+						<span>{entry.name}</span>
+					</SidebarMenuButton>
+					{#if expanded[entry.fullPath]}
+						<SidebarMenuSub>
+							{@render renderEntries(entry.children, false)}
+						</SidebarMenuSub>
+					{/if}
+				</SidebarMenuItem>
+			{:else}
+				<SidebarMenuSubItem>
+					<SidebarMenuSubButton size="sm" onclick={() => toggle(entry.fullPath)}>
+						{@render chevron(!!expanded[entry.fullPath])}
+						<span>{entry.name}</span>
+					</SidebarMenuSubButton>
+					{#if expanded[entry.fullPath]}
+						<SidebarMenuSub>
+							{@render renderEntries(entry.children, false)}
+						</SidebarMenuSub>
+					{/if}
+				</SidebarMenuSubItem>
 			{/if}
 		{/if}
 	{/each}
 {/snippet}
 
-{@render entryList(entries, 0)}
+<SidebarMenu>
+	{@render renderEntries(entries, true)}
+</SidebarMenu>

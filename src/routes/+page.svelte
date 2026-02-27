@@ -7,6 +7,7 @@
 	let { data }: { data: PageData } = $props();
 </script>
 
+<main class="mx-auto flex min-h-screen w-full max-w-7xl px-4 py-8">
 <section class="w-full rounded-lg border border-border p-8 shadow-sm">
 	<h1 class="text-2xl font-semibold">Audit Portal</h1>
 	<p class="mt-2 text-sm text-slate-600">Read-only source access for approved auditors.</p>
@@ -50,3 +51,4 @@
 		</form>
 	{/if}
 </section>
+</main>
