@@ -46,11 +46,13 @@ export const auth = betterAuth({
 					to: email,
 					subject: 'Sign in to Audit Portal',
 					html: `
-						<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-							<h2>Sign in to Audit Portal</h2>
-							<p>Click the link below to sign in. This link expires in 10 minutes.</p>
-							<p><a href="${url}" style="display:inline-block;padding:12px 24px;background:#18181b;color:#fff;text-decoration:none;border-radius:6px;">Sign In</a></p>
-							<p style="color:#666;font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
+						<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 460px; margin: 40px auto; color: #0f172a;">
+							<div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 32px;">
+								<p style="margin: 0 0 8px; font-size: 15px; color: #64748b;">Audit Portal</p>
+								<p style="margin: 0 0 24px; font-size: 17px;">Use the link below to sign in to your account.</p>
+								<a href="${url}" style="display: inline-block; padding: 10px 20px; background: #1e293b; color: #f8fafc; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">Sign in</a>
+								<p style="margin: 24px 0 0; font-size: 13px; color: #94a3b8;">This link expires in 10 minutes. If you didn't request this, ignore this email.</p>
+							</div>
 						</div>
 					`
 				});
