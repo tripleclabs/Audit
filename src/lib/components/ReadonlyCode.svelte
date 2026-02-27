@@ -10,11 +10,12 @@
 	import { oneDark } from '@codemirror/theme-one-dark';
 	import { onMount } from 'svelte';
 
-	let { content = '', filePath = '' }: { content?: string; filePath?: string } = $props();
+	let { content = '', filePath = '', dark = true }: { content?: string; filePath?: string; dark?: boolean } = $props();
 
 	let container: HTMLDivElement;
 	let editorView: EditorView | null = $state(null);
 	const languageCompartment = new Compartment();
+	const themeCompartment = new Compartment();
 
 	const detectLanguage = (path: string) => {
 		if (path.endsWith('.ts')) return javascript({ typescript: true });
@@ -32,7 +33,7 @@
 				doc: content,
 				extensions: [
 					basicSetup,
-					oneDark,
+					themeCompartment.of(dark ? oneDark : []),
 					EditorView.editable.of(false),
 					EditorState.readOnly.of(true),
 					languageCompartment.of(detectLanguage(filePath)),
@@ -57,6 +58,14 @@
 			});
 		}
 	});
+
+	$effect(() => {
+		if (editorView) {
+			editorView.dispatch({
+				effects: themeCompartment.reconfigure(dark ? oneDark : [])
+			});
+		}
+	});
 </script>
 
-<div bind:this={container} class="h-full min-h-[600px] overflow-hidden rounded border border-slate-700"></div>
+<div bind:this={container} class="h-full min-h-[600px] overflow-hidden rounded border {dark ? 'border-slate-700' : 'border-border'}"></div>

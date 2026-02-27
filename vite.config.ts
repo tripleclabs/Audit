@@ -5,10 +5,13 @@ const port = Number(process.env.PORT || "7173");
 
 export default defineConfig({
 	plugins: [sveltekit()],
-	  server: {
-    port
-  },
-  preview: {
-    port
-  }
+	server: {
+		port,
+		watch: {
+			ignored: ['**/data/**']
+		}
+	},
+	preview: {
+		port
+	}
 });

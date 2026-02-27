@@ -1,0 +1,121 @@
+import { env } from '$env/dynamic/private';
+import { error } from '@sveltejs/kit';
+import { simpleGit } from 'simple-git';
+import { readFile, readdir, writeFile, access, mkdir } from 'fs/promises';
+import { resolve, join, relative } from 'path';
+import type { RepoConfig } from './config';
+import { repoKey } from './config';
+
+export type TreeNode = {
+	path: string;
+	type: 'blob' | 'tree';
+};
+
+const DATA_DIR = resolve('data/repos');
+const treeCache = new Map<string, TreeNode[]>();
+const cloneLocks = new Map<string, Promise<void>>();
+
+function repoDir(key: string): string {
+	return join(DATA_DIR, key);
+}
+
+async function exists(p: string): Promise<boolean> {
+	try {
+		await access(p);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function walkDir(dir: string, base: string): Promise<TreeNode[]> {
+	const entries: TreeNode[] = [];
+	const items = await readdir(dir, { withFileTypes: true });
+
+	for (const item of items) {
+		if (item.name === '.git' || item.name === '.tree.json') continue;
+		const fullPath = join(dir, item.name);
+		const relPath = relative(base, fullPath);
+
+		if (item.isDirectory()) {
+			entries.push({ path: relPath, type: 'tree' });
+			const children = await walkDir(fullPath, base);
+			entries.push(...children);
+		} else if (item.isFile()) {
+			entries.push({ path: relPath, type: 'blob' });
+		}
+	}
+
+	return entries;
+}
+
+export async function ensureCloned(projectSlug: string, repo: RepoConfig): Promise<string> {
+	const key = repoKey(projectSlug, repo);
+	const dir = repoDir(key);
+
+	if (treeCache.has(key)) return dir;
+
+	const existing = cloneLocks.get(key);
+	if (existing) {
+		await existing;
+		return dir;
+	}
+
+	const doWork = async () => {
+		const treeFile = join(dir, '.tree.json');
+
+		if (await exists(treeFile)) {
+			const raw = await readFile(treeFile, 'utf-8');
+			treeCache.set(key, JSON.parse(raw));
+			return;
+		}
+
+		const token = env.GITHUB_API_TOKEN;
+		const cloneUrl = token
+			? `https://x-access-token:${token}@github.com/${repo.owner}/${repo.name}.git`
+			: `https://github.com/${repo.owner}/${repo.name}.git`;
+
+		await mkdir(dir, { recursive: true });
+
+		const git = simpleGit();
+		await git.clone(cloneUrl, dir, [
+			'--branch', repo.tag,
+			'--single-branch',
+			'--depth', '1'
+		]);
+
+		const tree = await walkDir(dir, dir);
+		treeCache.set(key, tree);
+		await writeFile(treeFile, JSON.stringify(tree));
+	};
+
+	const promise = doWork();
+	cloneLocks.set(key, promise);
+	try {
+		await promise;
+	} finally {
+		cloneLocks.delete(key);
+	}
+
+	return dir;
+}
+
+export async function getTree(projectSlug: string, repo: RepoConfig): Promise<TreeNode[]> {
+	await ensureCloned(projectSlug, repo);
+	return treeCache.get(repoKey(projectSlug, repo)) ?? [];
+}
+
+export async function getFileContent(projectSlug: string, repo: RepoConfig, filePath: string): Promise<string> {
+	const dir = await ensureCloned(projectSlug, repo);
+	const resolved = resolve(dir, filePath);
+
+	if (!resolved.startsWith(dir + '/')) {
+		throw error(403, 'Invalid file path');
+	}
+
+	try {
+		return await readFile(resolved, 'utf-8');
+	} catch {
+		throw error(404, 'File not found');
+	}
+}

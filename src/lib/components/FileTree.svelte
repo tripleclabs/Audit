@@ -50,7 +50,7 @@
 		SidebarMenuSubButton
 	} from '$lib/components/ui/sidebar';
 
-	let { tree, selectedPath, repoTag }: { tree: TreeNode[]; selectedPath: string; repoTag: string } =
+	let { tree, selectedPath, basePath }: { tree: TreeNode[]; selectedPath: string; basePath: string } =
 		$props();
 
 	const entries = $derived(buildTree(tree));
@@ -101,7 +101,7 @@
 				<SidebarMenuItem>
 					<SidebarMenuButton isActive={selectedPath === entry.fullPath}>
 						{@render fileIcon()}
-						<a href={`/repos/${repoTag}?path=${encodeURIComponent(entry.fullPath)}`} title={entry.fullPath}>
+						<a href={`${basePath}?path=${encodeURIComponent(entry.fullPath)}`} title={entry.fullPath}>
 							<span>{entry.name}</span>
 						</a>
 					</SidebarMenuButton>
@@ -109,7 +109,7 @@
 			{:else}
 				<SidebarMenuSubItem>
 					<SidebarMenuSubButton size="sm" isActive={selectedPath === entry.fullPath}>
-						<a href={`/repos/${repoTag}?path=${encodeURIComponent(entry.fullPath)}`} title={entry.fullPath}>
+						<a href={`${basePath}?path=${encodeURIComponent(entry.fullPath)}`} title={entry.fullPath}>
 							<span>{entry.name}</span>
 						</a>
 					</SidebarMenuSubButton>

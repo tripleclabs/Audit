@@ -47,7 +47,9 @@
     "clsx": "^2.1.1",
     "codemirror": "^6.0.1",
     "postgres": "^3.4.8",
+    "simple-git": "^3.32.3",
     "tailwind-merge": "^2.6.0",
-    "tailwind-variants": "^0.2.1"
+    "tailwind-variants": "^0.2.1",
+    "yaml": "^2.8.2"
   }
 }

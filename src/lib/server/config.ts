@@ -1,45 +1,65 @@
 import { readFile } from 'node:fs/promises';
 import { error } from '@sveltejs/kit';
+import { parse } from 'yaml';
 
 export type RepoConfig = {
-	tag: string;
 	owner: string;
 	name: string;
-	branch: string;
+	tag: string;
 };
 
-let usersCache: string[] | null = null;
-let reposCache: RepoConfig[] | null = null;
-
-const loadJson = async <T>(path: string): Promise<T> => {
-	const raw = await readFile(path, 'utf-8');
-	return JSON.parse(raw) as T;
+export type ProjectConfig = {
+	name: string;
+	slug: string;
+	repos: RepoConfig[];
+	users: string[];
 };
 
-export const getAllowedUsers = async (): Promise<string[]> => {
-	if (!usersCache) {
-		const users = await loadJson<string[]>('config/users.json');
-		usersCache = users.map((username) => username.toLowerCase());
+function parseRepoString(s: string): RepoConfig {
+	const [ownerName, tag] = s.split('@');
+	const [owner, name] = ownerName.split('/');
+	if (!owner || !name) {
+		throw new Error(`Invalid repo format: "${s}". Expected "owner/name@tag".`);
 	}
+	return { owner, name, tag: tag ?? 'main' };
+}
 
-	return usersCache;
-};
+let projectsCache: ProjectConfig[] | null = null;
 
-export const getRepoConfigs = async (): Promise<RepoConfig[]> => {
-	if (!reposCache) {
-		reposCache = await loadJson<RepoConfig[]>('config/repos.json');
+export async function getProjects(): Promise<ProjectConfig[]> {
+	if (!projectsCache) {
+		const raw = await readFile('config/projects.yaml', 'utf-8');
+		const data = parse(raw) as { projects: Array<{ name: string; slug: string; repos: string[]; users: string[] }> };
+		projectsCache = data.projects.map((p) => ({
+			name: p.name,
+			slug: p.slug,
+			repos: (p.repos ?? []).map(parseRepoString),
+			users: (p.users ?? []).map((u) => u.toLowerCase())
+		}));
 	}
+	return projectsCache;
+}
 
-	return reposCache;
-};
+export async function getProjectBySlug(slug: string): Promise<ProjectConfig> {
+	const projects = await getProjects();
+	const project = projects.find((p) => p.slug === slug);
+	if (!project) throw error(404, `Unknown project: ${slug}`);
+	return project;
+}
 
-export const getRepoByTag = async (tag: string): Promise<RepoConfig> => {
-	const repos = await getRepoConfigs();
-	const repo = repos.find((entry) => entry.tag === tag);
+export async function getProjectsForUser(username: string): Promise<ProjectConfig[]> {
+	const projects = await getProjects();
+	const lower = username.toLowerCase();
+	return projects.filter((p) => p.users.includes(lower));
+}
 
-	if (!repo) {
-		throw error(404, `Unknown repository tag: ${tag}`);
-	}
-
+export function getRepoInProject(project: ProjectConfig, repoName: string): RepoConfig {
+	const repo = project.repos.find((r) => r.name === repoName);
+	if (!repo) throw error(404, `Unknown repo "${repoName}" in project "${project.slug}"`);
 	return repo;
-};
+}
+
+/** Unique key for a repo within a project (used for cloning path, note storage, etc.) */
+export function repoKey(projectSlug: string, repo: RepoConfig): string {
+	return `${projectSlug}/${repo.owner}/${repo.name}`;
+}

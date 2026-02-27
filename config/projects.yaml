@@ -1,0 +1,7 @@
+projects:
+  - name: SvelteKit Audit
+    slug: sveltekit-audit
+    repos:
+      - sveltejs/kit@main
+    users:
+      - jgwmaxwell@gmail.com

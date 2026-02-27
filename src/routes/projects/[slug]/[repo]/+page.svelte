@@ -34,6 +34,7 @@
 	let formEl: HTMLFormElement | undefined = $state();
 
 	const pathSegments = $derived(data.selectedPath ? data.selectedPath.split('/') : []);
+	const basePath = $derived(`/projects/${data.project.slug}/${data.repo.name}`);
 
 	onMount(() => {
 		function onKeydown(e: KeyboardEvent) {
@@ -53,16 +54,16 @@
 	<Sidebar variant="sidebar" collapsible="icon">
 		<SidebarHeader>
 			<div class="flex flex-col gap-0.5 px-2 py-1 group-data-[collapsible=icon]:hidden">
-				<a href="/" class="text-xs text-blue-700 hover:underline">← Back</a>
-				<span class="text-sm font-semibold">{data.repo.tag}</span>
-				<span class="text-xs text-muted-foreground">{data.repo.owner}/{data.repo.name}@{data.repo.branch}</span>
+				<a href={`/projects/${data.project.slug}`} class="text-xs text-blue-700 hover:underline">&larr; {data.project.name}</a>
+				<span class="text-sm font-semibold">{data.repo.name}</span>
+				<span class="text-xs text-muted-foreground">{data.repo.owner}/{data.repo.name}@{data.repo.tag}</span>
 			</div>
 		</SidebarHeader>
 		<SidebarContent>
 			<SidebarGroup>
 				<SidebarGroupLabel>Files</SidebarGroupLabel>
 				<SidebarGroupContent>
-					<FileTree tree={data.tree} selectedPath={data.selectedPath} repoTag={data.repo.tag} />
+					<FileTree tree={data.tree} selectedPath={data.selectedPath} basePath={basePath} />
 				</SidebarGroupContent>
 			</SidebarGroup>
 		</SidebarContent>

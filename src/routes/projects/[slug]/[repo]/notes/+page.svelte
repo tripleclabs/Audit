@@ -4,8 +4,10 @@
 
 	let { data }: { data: PageData } = $props();
 
+	const basePath = $derived(`/projects/${data.project.slug}/${data.repo.name}`);
+
 	function downloadMarkdown() {
-		const lines = [`# Audit Notes: ${data.repo.tag}`, `> ${data.repo.owner}/${data.repo.name}@${data.repo.branch}`, ''];
+		const lines = [`# Audit Notes: ${data.repo.name}`, `> ${data.repo.owner}/${data.repo.name}@${data.repo.tag}`, ''];
 		for (const n of data.notes) {
 			lines.push(`## ${n.filePath}`, '', n.content, '');
 		}
@@ -13,7 +15,7 @@
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = `${data.repo.tag}-notes.md`;
+		a.download = `${data.project.slug}-${data.repo.name}-notes.md`;
 		a.click();
 		URL.revokeObjectURL(url);
 	}
@@ -22,9 +24,9 @@
 <div class="mx-auto max-w-3xl space-y-6 px-4 py-8">
 	<div class="flex items-center justify-between">
 		<div>
-			<a href={`/repos/${data.repo.tag}`} class="text-sm text-blue-700 hover:underline">← Back to {data.repo.tag}</a>
+			<a href={basePath} class="text-sm text-blue-700 hover:underline">&larr; Back to {data.repo.name}</a>
 			<h1 class="mt-1 text-xl font-semibold">Audit Notes</h1>
-			<p class="text-sm text-slate-500">{data.repo.owner}/{data.repo.name}@{data.repo.branch}</p>
+			<p class="text-sm text-slate-500">{data.repo.owner}/{data.repo.name}@{data.repo.tag}</p>
 		</div>
 		{#if data.notes.length > 0}
 			<Button onclick={downloadMarkdown} variant="secondary" size="sm">Download as Markdown</Button>
@@ -38,7 +40,7 @@
 			{#each data.notes as n}
 				<div class="rounded border border-border bg-white p-4">
 					<a
-						href={`/repos/${data.repo.tag}?path=${encodeURIComponent(n.filePath)}`}
+						href={`${basePath}?path=${encodeURIComponent(n.filePath)}`}
 						class="font-mono text-sm font-medium text-blue-700 hover:underline"
 					>
 						{n.filePath}
