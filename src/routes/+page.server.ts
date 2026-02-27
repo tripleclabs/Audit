@@ -1,22 +1,31 @@
+import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getRepoConfigs } from '$lib/server/config';
+import { auth } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const session = locals.session ?? null;
+	const session = locals.session ? { ...locals.session, user: locals.user } : null;
 
 	return {
 		session,
-		repos: session ? await getRepoConfigs() : []
+		repos: locals.session ? await getRepoConfigs() : []
 	};
 };
 
 export const actions: Actions = {
 	signin: async () => {
-		// redirect user to the new signin route
-		return { redirect: '/signin' } as unknown as void;
+		const result = await auth.api.signInSocial({
+			body: {
+				provider: 'github',
+				callbackURL: '/'
+			}
+		});
+
+		if (result.url) {
+			throw redirect(302, result.url);
+		}
 	},
 	signout: async () => {
-		// demo signout redirect; better-auth provides its own endpoints
-		return { redirect: '/signin' } as unknown as void;
+		throw redirect(302, '/api/auth/sign-out');
 	}
 };
