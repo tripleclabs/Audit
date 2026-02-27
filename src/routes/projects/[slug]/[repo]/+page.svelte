@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { Search, Sun, Moon, X, Loader2 } from '@lucide/svelte';
 	import ReadonlyCode from '$lib/components/ReadonlyCode.svelte';
@@ -50,13 +52,20 @@
 	const basePath = $derived(`/projects/${data.project.slug}/${data.repo.name}`);
 	const watermarkEmail = $derived(data.user?.email ?? '');
 
-	async function doSearch() {
+	async function doSearch(updateUrl = true) {
 		const q = searchQuery.trim();
 		if (q.length < 2) return;
 
 		searching = true;
 		searchError = '';
 		searchActive = true;
+
+		if (updateUrl) {
+			const url = new URL($page.url);
+			url.searchParams.set('q', q);
+			url.searchParams.delete('path');
+			goto(url.toString(), { replaceState: false, keepFocus: true, noScroll: true });
+		}
 
 		try {
 			const res = await fetch(`/api/projects/${data.project.slug}/${data.repo.name}/search?q=${encodeURIComponent(q)}`);
@@ -80,6 +89,9 @@
 		searchResults = [];
 		searchActive = false;
 		searchError = '';
+		const url = new URL($page.url);
+		url.searchParams.delete('q');
+		goto(url.toString(), { replaceState: true, keepFocus: true, noScroll: true });
 	}
 
 	$effect(() => {
@@ -91,6 +103,12 @@
 	});
 
 	onMount(() => {
+		// Restore search from URL on back navigation
+		const q = $page.url.searchParams.get('q');
+		if (q) {
+			searchQuery = q;
+			doSearch(false);
+		}
 		// Clean up dark class when leaving the page
 		return () => document.documentElement.classList.remove('dark');
 	});
@@ -157,7 +175,7 @@
 						<div class="space-y-0.5 px-2">
 							{#each searchResults as result}
 								<a
-									href={`${basePath}?path=${encodeURIComponent(result.filePath)}`}
+									href={`${basePath}?path=${encodeURIComponent(result.filePath)}${result.matches[0] ? `&line=${result.matches[0].lineNumber}` : ''}`}
 									class="block rounded-md px-2 py-1.5 hover:bg-sidebar-accent {data.selectedPath === result.filePath ? 'bg-sidebar-accent' : ''}"
 								>
 									<div class="flex items-baseline justify-between gap-2">
@@ -225,7 +243,7 @@
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<section class="relative flex-1 overflow-hidden bg-secondary p-2">
 				{#if data.selectedPath}
-					<ReadonlyCode filePath={data.selectedPath} content={data.selectedContent} dark={darkTheme} />
+					<ReadonlyCode filePath={data.selectedPath} content={data.selectedContent} dark={darkTheme} line={data.selectedLine} />
 				{:else}
 					<div class="flex h-full items-center justify-center text-sm text-muted-foreground">
 						Select a file in the sidebar to inspect it.

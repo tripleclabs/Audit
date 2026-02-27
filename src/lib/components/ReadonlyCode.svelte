@@ -14,7 +14,7 @@
 	import { cpp } from '@codemirror/legacy-modes/mode/clike';
 	import { onMount } from 'svelte';
 
-	let { content = '', filePath = '', dark = true }: { content?: string; filePath?: string; dark?: boolean } = $props();
+	let { content = '', filePath = '', dark = true, line = 0 }: { content?: string; filePath?: string; dark?: boolean; line?: number } = $props();
 
 	let container: HTMLDivElement;
 	let editorView: EditorView | null = $state(null);
@@ -63,6 +63,18 @@
 				changes: { from: 0, to: editorView.state.doc.length, insert: content },
 				effects: languageCompartment.reconfigure(detectLanguage(filePath))
 			});
+
+			// Scroll to line after content update
+			if (line > 0) {
+				requestAnimationFrame(() => {
+					if (!editorView) return;
+					const lineInfo = editorView.state.doc.line(Math.min(line, editorView.state.doc.lines));
+					editorView.dispatch({
+						selection: { anchor: lineInfo.from },
+						effects: EditorView.scrollIntoView(lineInfo.from, { y: 'center' })
+					});
+				});
+			}
 		}
 	});
 

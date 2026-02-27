@@ -37,7 +37,7 @@ async function walkDir(dir: string, base: string): Promise<TreeNode[]> {
 	const items = await readdir(dir, { withFileTypes: true });
 
 	for (const item of items) {
-		if (item.name === '.git' || item.name === '.tree.json') continue;
+		if (item.name === '.git' || item.name === '.tree.json' || item.name === '.claude' || item.name === '.vscode') continue;
 		const fullPath = join(dir, item.name);
 		const relPath = relative(base, fullPath);
 
@@ -131,6 +131,7 @@ export type SearchMatch = {
 
 export type SearchResult = {
 	filePath: string;
+	repoName?: string;
 	language: string;
 	score: number;
 	matches: SearchMatch[];
@@ -146,7 +147,7 @@ export async function searchRepo(
 	const dir = await ensureCloned(projectSlug, repo);
 
 	try {
-		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', dir], {
+		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', dir, '--exclude-dir', '.claude,.vscode'], {
 			timeout: 10_000,
 			maxBuffer: 5 * 1024 * 1024
 		});
@@ -162,7 +163,7 @@ export async function searchRepo(
 		}>;
 
 		const PREFERRED_LANGUAGES = ['Swift'];
-		const BOOST = 2.0;
+		const BOOST = 10.0;
 
 		const results = raw.map((entry) => ({
 			filePath: relative(dir, entry.location),
@@ -185,6 +186,76 @@ export async function searchRepo(
 			return [];
 		}
 		console.error('Search failed:', e);
+		return [];
+	}
+}
+
+export async function searchProject(
+	projectSlug: string,
+	repos: RepoConfig[],
+	query: string
+): Promise<SearchResult[]> {
+	// Ensure all repos are cloned first
+	await Promise.all(repos.map((repo) => ensureCloned(projectSlug, repo)));
+
+	const projectDir = join(DATA_DIR, projectSlug);
+
+	try {
+		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', projectDir, '--exclude-dir', '.claude,.vscode'], {
+			timeout: 15_000,
+			maxBuffer: 10 * 1024 * 1024
+		});
+
+		if (!stdout.trim()) return [];
+
+		const raw = JSON.parse(stdout) as Array<{
+			filename: string;
+			location: string;
+			score: number;
+			language: string;
+			lines: Array<{ line_number: number; content: string }>;
+		}>;
+
+		const PREFERRED_LANGUAGES = ['Swift'];
+		const BOOST = 10.0;
+
+		const results = raw.map((entry) => {
+			const relFromProject = relative(projectDir, entry.location);
+			// relFromProject is like "owner/repoName/path/to/file"
+			// Find which repo this belongs to
+			let repoName = '';
+			let filePath = relFromProject;
+			for (const repo of repos) {
+				const repoPrefix = `${repo.owner}/${repo.name}/`;
+				if (relFromProject.startsWith(repoPrefix)) {
+					repoName = repo.name;
+					filePath = relFromProject.slice(repoPrefix.length);
+					break;
+				}
+			}
+
+			return {
+				filePath,
+				repoName,
+				language: entry.language,
+				score: PREFERRED_LANGUAGES.includes(entry.language) ? entry.score * BOOST : entry.score,
+				matches: (entry.lines ?? [])
+					.filter((l) => l.content?.trim().length > 0)
+					.slice(0, 5)
+					.map((l) => ({
+						lineNumber: l.line_number,
+						content: l.content
+					}))
+			};
+		});
+
+		results.sort((a, b) => b.score - a.score);
+		return results.slice(0, 100);
+	} catch (e: unknown) {
+		if (e && typeof e === 'object' && 'code' in e && (e as { code: number }).code === 1) {
+			return [];
+		}
+		console.error('Project search failed:', e);
 		return [];
 	}
 }

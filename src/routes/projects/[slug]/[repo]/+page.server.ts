@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ params, locals, url, request }) => 
 	const repo = getRepoInProject(project, params.repo);
 	const tree = await getTree(project.slug, repo);
 	const selectedPath = url.searchParams.get('path') ?? '';
+	const selectedLine = parseInt(url.searchParams.get('line') ?? '0', 10) || 0;
 
 	if (selectedPath && !tree.some((node) => node.type === 'blob' && node.path === selectedPath)) {
 		throw error(404, 'File path not found');
@@ -64,6 +65,7 @@ export const load: PageServerLoad = async ({ params, locals, url, request }) => 
 		repo,
 		tree,
 		selectedPath,
+		selectedLine,
 		selectedContent,
 		noteContent
 	};
