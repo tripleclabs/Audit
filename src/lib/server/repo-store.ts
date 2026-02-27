@@ -37,7 +37,7 @@ async function walkDir(dir: string, base: string): Promise<TreeNode[]> {
 	const items = await readdir(dir, { withFileTypes: true });
 
 	for (const item of items) {
-		if (item.name === '.git' || item.name === '.tree.json' || item.name === '.repo-meta.json' || item.name === '.claude' || item.name === '.vscode') continue;
+		if (item.name === '.git' || item.name === '.github' || item.name === '.tree.json' || item.name === '.repo-meta.json' || item.name === '.claude' || item.name === '.vscode') continue;
 		const fullPath = join(dir, item.name);
 		const relPath = relative(base, fullPath);
 
@@ -162,7 +162,7 @@ export async function searchRepo(
 	const dir = await ensureCloned(projectSlug, repo);
 
 	try {
-		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', dir, '--exclude-dir', '.claude,.vscode'], {
+		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', dir, '--exclude-dir', '.claude,.vscode,.github'], {
 			timeout: 10_000,
 			maxBuffer: 5 * 1024 * 1024
 		});
@@ -216,7 +216,7 @@ export async function searchProject(
 	const projectDir = join(DATA_DIR, projectSlug);
 
 	try {
-		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', projectDir, '--exclude-dir', '.claude,.vscode'], {
+		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', projectDir, '--exclude-dir', '.claude,.vscode,.github'], {
 			timeout: 15_000,
 			maxBuffer: 10 * 1024 * 1024
 		});
