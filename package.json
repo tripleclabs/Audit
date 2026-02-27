@@ -46,6 +46,7 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.0",
     "@lucide/svelte": "^0.482.0",
+    "@sentry/sveltekit": "^10.40.0",
     "@sveltejs/adapter-node": "^5.5.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
