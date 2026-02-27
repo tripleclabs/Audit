@@ -12,6 +12,30 @@ A SvelteKit application for **read-only repository auditing**.
 
 ## Configuration
 
+### Audit log (new)
+
+Every time a repository file is viewed the server writes a row to the `audit` table
+with the user identifier (email, then name, then user id), client IP, repository tag,
+file path and timestamp.  The schema is managed by `drizzle-kit`; after pulling the
+latest changes run:
+
+```bash
+npm run db:push   # or bun run db:push
+```
+
+You can inspect the table using `npm run db:studio` or query it directly from
+Postgres.  For example:
+
+```sql
+SELECT user, ip, repo, file_path, accessed_at
+FROM audit
+ORDER BY accessed_at DESC
+LIMIT 50;
+```
+
+
+## Configuration
+
 ### 1) Allowed users
 
 Edit `config/users.json`:

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Github } from '@lucide/svelte';
 	import { Button } from '$components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -21,10 +22,16 @@
 				<h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Configured repositories</h2>
 				<ul class="space-y-2">
 					{#each data.repos as repo}
-						<li>
+						{@const count = data.noteCounts?.[repo.tag] ?? 0}
+						<li class="flex items-center gap-2">
 							<a class="text-sm text-blue-700 hover:underline" href={`/repos/${repo.tag}`}>
 								{repo.tag} → {repo.owner}/{repo.name}@{repo.branch}
 							</a>
+							{#if count > 0}
+								<a href={`/repos/${repo.tag}/notes`} class="inline-flex items-center gap-1">
+									<Badge variant="secondary">{count} {count === 1 ? 'note' : 'notes'}</Badge>
+								</a>
+							{/if}
 						</li>
 					{/each}
 				</ul>

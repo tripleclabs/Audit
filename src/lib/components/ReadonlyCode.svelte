@@ -35,7 +35,12 @@
 					oneDark,
 					EditorView.editable.of(false),
 					EditorState.readOnly.of(true),
-					languageCompartment.of(detectLanguage(filePath))
+					languageCompartment.of(detectLanguage(filePath)),
+					EditorView.domEventHandlers({
+						copy: (e) => e.preventDefault(),
+						cut: (e) => e.preventDefault()
+					}),
+					EditorView.contentAttributes.of({ class: 'select-none' })
 				]
 			}),
 			parent: container

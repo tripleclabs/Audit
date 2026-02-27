@@ -18,3 +18,17 @@
 body {
 	@apply bg-background text-foreground min-h-screen antialiased;
 }
+
+@media print {
+	body {
+		visibility: hidden;
+	}
+	body::after {
+		visibility: visible;
+		display: block;
+		content: 'Printing is disabled for this application.';
+		text-align: center;
+		padding: 2rem;
+		font-size: 1.25rem;
+	}
+}
