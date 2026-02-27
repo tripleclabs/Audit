@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '$lib/components/ui/card';
+	import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
 	import type { PageData } from './$types';
 
@@ -46,6 +46,13 @@
 							<span class="text-xs text-muted-foreground">{repo.tag}</span>
 						</div>
 					</CardContent>
+					{#if count > 0}
+						<CardFooter class="pt-0">
+							<a href={`/projects/${data.project.slug}/${repo.name}/notes`} class="text-xs text-blue-600 hover:underline" onclick={(e) => e.stopPropagation()}>
+								View notes
+							</a>
+						</CardFooter>
+					{/if}
 				</Card>
 			</a>
 		{/each}

@@ -85,7 +85,7 @@
 			<Card class="w-full max-w-sm">
 				<CardHeader class="text-center">
 					<CardTitle class="text-xl">Audit Portal</CardTitle>
-					<CardDescription>Read-only source access for approved auditors.</CardDescription>
+					<CardDescription>Please log in with your configured account.</CardDescription>
 				</CardHeader>
 				<CardContent class="space-y-4">
 					{#if magicLinkSent}
@@ -125,7 +125,7 @@
 					{/if}
 				</CardContent>
 				<CardFooter class="justify-center">
-					<p class="text-xs text-muted-foreground">Contact your administrator for access.</p>
+					<p class="text-xs text-muted-foreground">Contact your team for access.</p>
 				</CardFooter>
 			</Card>
 		</div>

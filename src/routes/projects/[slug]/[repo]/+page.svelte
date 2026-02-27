@@ -37,6 +37,7 @@
 
 	const pathSegments = $derived(data.selectedPath ? data.selectedPath.split('/') : []);
 	const basePath = $derived(`/projects/${data.project.slug}/${data.repo.name}`);
+	const watermarkEmail = $derived(data.user?.email ?? '');
 
 	onMount(() => {
 		function onKeydown(e: KeyboardEvent) {
@@ -109,13 +110,23 @@
 		</header>
 
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<section class="flex-1 overflow-hidden p-2 {darkTheme ? 'bg-slate-900' : 'bg-gray-50'}">
+			<section class="relative flex-1 overflow-hidden p-2 {darkTheme ? 'bg-slate-900' : 'bg-gray-50'}">
 				{#if data.selectedPath}
 					<ReadonlyCode filePath={data.selectedPath} content={data.selectedContent} dark={darkTheme} />
 				{:else}
 					<div class="flex h-full items-center justify-center text-sm {darkTheme ? 'text-slate-400' : 'text-slate-500'}">
 						Select a file in the sidebar to inspect it.
 					</div>
+				{/if}
+				{#if watermarkEmail}
+					<div
+						class="pointer-events-none absolute inset-0 overflow-hidden"
+						aria-hidden="true"
+						style="
+							background-image: url(&quot;data:image/svg+xml,{encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'><text transform='rotate(-25 200 100)' x='50%' y='50%' text-anchor='middle' font-family='monospace' font-size='14' fill='${darkTheme ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}' dominant-baseline='middle'>${watermarkEmail}</text></svg>`)}&quot;);
+							background-repeat: repeat;
+						"
+					></div>
 				{/if}
 			</section>
 

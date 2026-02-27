@@ -1,7 +1,8 @@
 projects:
-  - name: SvelteKit Audit
-    slug: sveltekit-audit
+  - name: Durst Audit
+    slug: durst
     repos:
-      - sveltejs/kit@main
+      - tripleclabs/swift-luau-engine@v0.1.0
+      - tripleclabs/swift-xmlpdf@v0.2.0
     users:
       - jgwmaxwell@gmail.com

@@ -8,6 +8,9 @@
 	import { css } from '@codemirror/lang-css';
 	import { markdown } from '@codemirror/lang-markdown';
 	import { oneDark } from '@codemirror/theme-one-dark';
+	import { StreamLanguage } from '@codemirror/language';
+	import { swift } from '@codemirror/legacy-modes/mode/swift';
+	import { lua } from '@codemirror/legacy-modes/mode/lua';
 	import { onMount } from 'svelte';
 
 	let { content = '', filePath = '', dark = true }: { content?: string; filePath?: string; dark?: boolean } = $props();
@@ -24,6 +27,8 @@
 		if (path.endsWith('.html') || path.endsWith('.svelte')) return html();
 		if (path.endsWith('.css')) return css();
 		if (path.endsWith('.md')) return markdown();
+		if (path.endsWith('.swift')) return StreamLanguage.define(swift);
+		if (path.endsWith('.lua') || path.endsWith('.luau')) return StreamLanguage.define(lua);
 		return [];
 	};
 
