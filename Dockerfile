@@ -1,5 +1,8 @@
 FROM oven/bun:1 AS base
 
+FROM golang:1.25-bookworm AS cs-build
+RUN go install github.com/boyter/cs/v3@latest
+
 FROM base AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
@@ -21,5 +24,6 @@ COPY --from=build /app/build ./build
 COPY --from=build /app/package.json ./
 COPY --from=build /app/drizzle.config.ts ./
 COPY --from=build /app/src/lib/server/db ./src/lib/server/db
+COPY --from=cs-build /go/bin/cs /usr/local/bin/cs
 EXPOSE 3000
 CMD ["bun", "./build/index.js"]
