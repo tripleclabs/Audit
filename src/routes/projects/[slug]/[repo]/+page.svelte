@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
+	import { Sun, Moon } from '@lucide/svelte';
 	import ReadonlyCode from '$lib/components/ReadonlyCode.svelte';
 	import FileTree from '$lib/components/FileTree.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -31,6 +32,7 @@
 	let { data }: { data: PageData } = $props();
 	let saving = $state(false);
 	let saved = $state(false);
+	let darkTheme = $state(false);
 	let formEl: HTMLFormElement | undefined = $state();
 
 	const pathSegments = $derived(data.selectedPath ? data.selectedPath.split('/') : []);
@@ -94,14 +96,24 @@
 			{:else}
 				<span class="text-sm text-muted-foreground">Select a file</span>
 			{/if}
+			<div class="ml-auto">
+				<Button variant="ghost" size="sm" class="h-7 w-7 p-0" onclick={() => { darkTheme = !darkTheme; }}>
+					{#if darkTheme}
+						<Sun class="h-4 w-4" />
+					{:else}
+						<Moon class="h-4 w-4" />
+					{/if}
+					<span class="sr-only">Toggle code theme</span>
+				</Button>
+			</div>
 		</header>
 
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<section class="flex-1 overflow-hidden bg-slate-900 p-2">
+			<section class="flex-1 overflow-hidden p-2 {darkTheme ? 'bg-slate-900' : 'bg-gray-50'}">
 				{#if data.selectedPath}
-					<ReadonlyCode filePath={data.selectedPath} content={data.selectedContent} />
+					<ReadonlyCode filePath={data.selectedPath} content={data.selectedContent} dark={darkTheme} />
 				{:else}
-					<div class="flex h-full items-center justify-center text-sm text-slate-400">
+					<div class="flex h-full items-center justify-center text-sm {darkTheme ? 'text-slate-400' : 'text-slate-500'}">
 						Select a file in the sidebar to inspect it.
 					</div>
 				{/if}
