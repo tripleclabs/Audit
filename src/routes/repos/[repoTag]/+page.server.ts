@@ -4,7 +4,7 @@ import { getRepoByTag } from '$lib/server/config';
 import { getFileFromRepo, getTreeForRepo } from '$lib/server/github';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
-	const session = await locals.auth();
+	const session = locals.session ?? null;
 	if (!session) {
 		throw redirect(303, '/');
 	}

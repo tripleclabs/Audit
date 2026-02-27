@@ -4,7 +4,7 @@ import { getRepoByTag } from '$lib/server/config';
 import { getTreeForRepo } from '$lib/server/github';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	const session = await locals.auth();
+	const session = locals.session ?? null;
 	if (!session) {
 		throw redirect(303, '/');
 	}

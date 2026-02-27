@@ -1,6 +1,14 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+const port = Number(process.env.PORT || "7173");
+
 export default defineConfig({
-	plugins: [sveltekit()]
+	plugins: [sveltekit()],
+	  server: {
+    port
+  },
+  preview: {
+    port
+  }
 });

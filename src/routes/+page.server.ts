@@ -2,7 +2,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { getRepoConfigs } from '$lib/server/config';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const session = await locals.auth();
+	const session = locals.session ?? null;
 
 	return {
 		session,
@@ -11,10 +11,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	signin: async (event) => {
-		await event.locals.signIn('github', { redirectTo: '/' });
+	signin: async () => {
+		// redirect user to the new signin route
+		return { redirect: '/signin' } as unknown as void;
 	},
-	signout: async (event) => {
-		await event.locals.signOut({ redirectTo: '/' });
+	signout: async () => {
+		// demo signout redirect; better-auth provides its own endpoints
+		return { redirect: '/signin' } as unknown as void;
 	}
 };

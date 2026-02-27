@@ -1,13 +1,13 @@
-import type { Session } from '@auth/sveltekit';
+import type { User, Session } from 'better-auth/minimal';
 
 declare global {
 	namespace App {
 		interface Locals {
-			auth(): Promise<Session | null>;
+			user?: User | null;
+			session?: Session | null;
 		}
-		interface PageData {
-			session: Session | null;
-		}
+
+		interface PageData { session: Session | null }
 	}
 }
 
