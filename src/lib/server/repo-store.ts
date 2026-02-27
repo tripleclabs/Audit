@@ -1,10 +1,14 @@
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { simpleGit } from 'simple-git';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { readFile, readdir, writeFile, access, mkdir } from 'fs/promises';
 import { resolve, join, relative } from 'path';
 import type { RepoConfig } from './config';
 import { repoKey } from './config';
+
+const execFileAsync = promisify(execFile);
 
 export type TreeNode = {
 	path: string;
@@ -117,5 +121,70 @@ export async function getFileContent(projectSlug: string, repo: RepoConfig, file
 		return await readFile(resolved, 'utf-8');
 	} catch {
 		throw error(404, 'File not found');
+	}
+}
+
+export type SearchMatch = {
+	lineNumber: number;
+	content: string;
+};
+
+export type SearchResult = {
+	filePath: string;
+	language: string;
+	score: number;
+	matches: SearchMatch[];
+};
+
+const CS_BIN = env.CS_BIN || 'cs';
+
+export async function searchRepo(
+	projectSlug: string,
+	repo: RepoConfig,
+	query: string
+): Promise<SearchResult[]> {
+	const dir = await ensureCloned(projectSlug, repo);
+
+	try {
+		const { stdout } = await execFileAsync(CS_BIN, [query, '-f', 'json', '--dir', dir], {
+			timeout: 10_000,
+			maxBuffer: 5 * 1024 * 1024
+		});
+
+		if (!stdout.trim()) return [];
+
+		const raw = JSON.parse(stdout) as Array<{
+			filename: string;
+			location: string;
+			score: number;
+			language: string;
+			lines: Array<{ line_number: number; content: string }>;
+		}>;
+
+		const PREFERRED_LANGUAGES = ['Swift'];
+		const BOOST = 2.0;
+
+		const results = raw.map((entry) => ({
+			filePath: relative(dir, entry.location),
+			language: entry.language,
+			score: PREFERRED_LANGUAGES.includes(entry.language) ? entry.score * BOOST : entry.score,
+			matches: (entry.lines ?? [])
+				.filter((l) => l.content?.trim().length > 0)
+				.slice(0, 5)
+				.map((l) => ({
+					lineNumber: l.line_number,
+					content: l.content
+				}))
+		}));
+
+		results.sort((a, b) => b.score - a.score);
+		return results.slice(0, 100);
+	} catch (e: unknown) {
+		// cs exits with code 1 when no results found
+		if (e && typeof e === 'object' && 'code' in e && (e as { code: number }).code === 1) {
+			return [];
+		}
+		console.error('Search failed:', e);
+		return [];
 	}
 }

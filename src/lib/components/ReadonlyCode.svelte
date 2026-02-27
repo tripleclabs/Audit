@@ -11,6 +11,7 @@
 	import { StreamLanguage } from '@codemirror/language';
 	import { swift } from '@codemirror/legacy-modes/mode/swift';
 	import { lua } from '@codemirror/legacy-modes/mode/lua';
+	import { cpp } from '@codemirror/legacy-modes/mode/clike';
 	import { onMount } from 'svelte';
 
 	let { content = '', filePath = '', dark = true }: { content?: string; filePath?: string; dark?: boolean } = $props();
@@ -29,6 +30,7 @@
 		if (path.endsWith('.md')) return markdown();
 		if (path.endsWith('.swift')) return StreamLanguage.define(swift);
 		if (path.endsWith('.lua') || path.endsWith('.luau')) return StreamLanguage.define(lua);
+		if (path.endsWith('.cpp') || path.endsWith('.cc') || path.endsWith('.cxx') || path.endsWith('.c') || path.endsWith('.h') || path.endsWith('.hpp')) return StreamLanguage.define(cpp);
 		return [];
 	};
 
